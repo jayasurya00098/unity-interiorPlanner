@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Net;
 using UnityEngine;
 
 public class Shape : MonoBehaviour
@@ -10,28 +8,53 @@ public class Shape : MonoBehaviour
     public Mesh mesh;
     [HideInInspector]
     public MeshRenderer meshRenderer;
-
-    private int[] triangles = { 0, 1, 2 };
-
-    public virtual void GenerateMesh(int shape, List<Vector3> _vertices)
+    
+    /*
+    [HideInInspector]
+    public Vector3[] vertices = 
     {
-        Vector3[] vertices = new Vector3[_vertices.Count];
+        new Vector3( 1, 1, 1),
+        new Vector3(-1, 1, 1),
+        new Vector3(-1,-1, 1),
+        new Vector3( 1,-1, 1),
+        new Vector3(-1, 1,-1),
+        new Vector3( 1, 1,-1),
+        new Vector3( 1,-1,-1),
+        new Vector3(-1,-1,-1)
+    };*/
 
-        for (int i = 0; i < _vertices.Count; i++)
-        {
-            vertices[i] = _vertices[i];
-        }
+    [HideInInspector]
+    public Vector3[] vertices =
+    {
+        new Vector3( 1, 1, 1),
+        new Vector3(-1, 1, 1),
+        new Vector3(-1,-1, 1),
+        new Vector3( 1,-1, 1),
+        new Vector3(-1, 1,-1),
+        new Vector3( 1, 1,-1),
+        new Vector3( 1,-1,-1),
+        new Vector3(-1,-1,-1)
+    };
 
-        switch (shape)
+    [HideInInspector]
+    public int[][] faceTriangles =
+    {
+        new int[] { 0, 1, 2, 3},
+        new int[] { 5, 0, 3, 6},
+        new int[] { 4, 5, 6, 7},
+        new int[] { 1, 4, 7, 2},
+        new int[] { 5, 4, 1, 0},
+        new int[] { 3, 2, 7, 6}
+    };
+
+    public Vector3[] FaceVertices(int dir)
+    {
+        Vector3[] fv = new Vector3[4];
+        for (int i = 0; i < fv.Length; i++)
         {
-            case 0:
-                mesh.vertices = vertices;
-                break;
-            case 1:
-                mesh.vertices = vertices;
-                mesh.triangles = triangles;
-                break;
+            fv[i] = vertices[faceTriangles[dir][i]]; 
         }
+        return fv;
     }
 }
 

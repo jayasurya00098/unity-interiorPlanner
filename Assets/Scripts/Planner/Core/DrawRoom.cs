@@ -1,8 +1,11 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
-public class ShapeGenerator : MonoBehaviour
+public class DrawRoom : MonoBehaviour
 {
+    public static DrawRoom Instance;
+
     public enum DrawState
     {
         Disabled,
@@ -12,11 +15,15 @@ public class ShapeGenerator : MonoBehaviour
 
     public DrawState state;
 
-    public ViewController controller = null;
+    [SerializeField]
+    private Material defaultMaterial;
 
+    private ViewController controller = null;
     private LineRenderer lineRenderer = null;
 
+    [SerializeField]
     private Vector3 startPoint = Vector3.zero;
+    [SerializeField]
     private Vector3 endPoint = Vector3.zero;
 
     private Vector2 startScreenPoint = Vector2.zero;
@@ -24,10 +31,13 @@ public class ShapeGenerator : MonoBehaviour
     private Vector2 delta = Vector2.zero;
     private float height = 0f;
 
+    private bool reset = false;
+
     RaycastHit hit;
 
     private void Start()
     {
+        Instance = this;
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = 0;
     }
@@ -38,8 +48,6 @@ public class ShapeGenerator : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                ClearAllPoints();
-
                 Ray ray;
 
                 ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -48,8 +56,6 @@ public class ShapeGenerator : MonoBehaviour
                 {
                     startPoint = hit.point;
                 }
-
-                ClickToAddPoint();
             }
 
             if (Input.GetMouseButton(0))
@@ -65,12 +71,13 @@ public class ShapeGenerator : MonoBehaviour
                 }
 
                 DrawQuadWithLineRenderer(startPoint, endPoint);
+                CreateCube(startPoint, endPoint, height);
             }
 
             if (Input.GetMouseButtonUp(0))
             {
-                ClickToAddPoint();
                 state = DrawState.DrawWall;
+                
             }
         }
         
@@ -82,26 +89,49 @@ public class ShapeGenerator : MonoBehaviour
 
             height = delta.y / 100f;
 
+            CreateCube(startPoint, endPoint, height);
             DrawCubeWithLineRenderer(startPoint, endPoint, height);
 
             if(Input.GetMouseButtonDown(0))
             {
+                CreateCube(startPoint, endPoint, height);
+
+                Collider meshCol = controller.gameObject.AddComponent<MeshCollider>();
+                meshCol.tag = "Room";
+
                 state = DrawState.Disabled;
+                reset = false;
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.B))
+        if(state!= DrawState.Disabled && !reset)
         {
-            controller.ModelProperty.GenerateMesh((int)ShapeType.Triangle, controller.ModelProperty.vertices);
+            startPoint = Vector3.zero;
+            endPoint = Vector3.zero;
+
+            startScreenPoint = Vector2.zero;
+            currentScreenPoint = Vector2.zero;
+            delta = Vector2.zero;
+            height = 0f;
+
+            reset = true;
         }
+    }
+
+    public void Draw()
+    {
+        GameObject go = new GameObject();
+        controller = go.AddComponent<ViewController>();
+
+        StartCoroutine(SwitchState());
     }
 
     void DrawQuadWithLineRenderer(Vector3 pos1, Vector3 pos2)
     {
-        Vector3 p1 = new Vector3(pos1.x, 0f, pos1.z);
-        Vector3 p2 = new Vector3(pos1.x, 0f, pos2.z);
-        Vector3 p3 = new Vector3(pos2.x, 0f, pos2.z);
-        Vector3 p4 = new Vector3(pos2.x, 0f, pos1.z);
+        Vector3 p1 = new Vector3(pos1.x, 0.01f, pos1.z);
+        Vector3 p2 = new Vector3(pos1.x, 0.01f, pos2.z);
+        Vector3 p3 = new Vector3(pos2.x, 0.01f, pos2.z);
+        Vector3 p4 = new Vector3(pos2.x, 0.01f, pos1.z);
 
         lineRenderer.positionCount = 5;
 
@@ -114,13 +144,12 @@ public class ShapeGenerator : MonoBehaviour
 
     void DrawCubeWithLineRenderer(Vector3 pos1, Vector3 pos2, float vertical)
     {
-        //points 
-
+        //base 
         Vector3 p1 = new Vector3(pos1.x, 0f, pos1.z);
         Vector3 p2 = new Vector3(pos1.x, 0f, pos2.z);
         Vector3 p3 = new Vector3(pos2.x, 0f, pos2.z);
         Vector3 p4 = new Vector3(pos2.x, 0f, pos1.z);
-
+        //top
         Vector3 p5 = new Vector3(pos1.x, vertical, pos1.z);
         Vector3 p6 = new Vector3(pos1.x, vertical, pos2.z);
         Vector3 p7 = new Vector3(pos2.x, vertical, pos2.z);
@@ -149,14 +178,47 @@ public class ShapeGenerator : MonoBehaviour
         lineRenderer.SetPosition(16, p1);
     }
 
-    void ClickToAddPoint()
+    void CreateCube(Vector3 pos1, Vector3 pos2, float vertical)
     {
-        //generate and add all points to model property
-        controller.ModelProperty.vertices.Add(hit.point);
+        lineRenderer.positionCount = 0;
+
+        //patch for inverted error
+        if ((pos2.x > pos1.x && pos2.z > pos1.z) || (pos2.x < pos1.x && pos2.z < pos1.z))
+        {
+            controller.GetModel.invert = true;
+            Debug.Log(controller.GetModel.invert);
+        }
+
+        //base 
+        Vector3 p1 = new Vector3(pos1.x, 0.01f, pos1.z);
+        Vector3 p2 = new Vector3(pos1.x, 0.01f, pos2.z);
+        Vector3 p3 = new Vector3(pos2.x, 0.01f, pos2.z);
+        Vector3 p4 = new Vector3(pos2.x, 0.01f, pos1.z);
+        //top
+        Vector3 p5 = new Vector3(pos1.x, vertical, pos1.z);
+        Vector3 p6 = new Vector3(pos1.x, vertical, pos2.z);
+        Vector3 p7 = new Vector3(pos2.x, vertical, pos2.z);
+        Vector3 p8 = new Vector3(pos2.x, vertical, pos1.z);
+
+        //back
+        controller.GetModel.vertices[0] = p7;
+        controller.GetModel.vertices[1] = p6;
+        controller.GetModel.vertices[2] = p2;
+        controller.GetModel.vertices[3] = p3;
+        //front
+        controller.GetModel.vertices[4] = p5;
+        controller.GetModel.vertices[5] = p8;
+        controller.GetModel.vertices[6] = p4;
+        controller.GetModel.vertices[7] = p1;
+
+        controller.GetModel.meshRenderer.material = defaultMaterial;
+        controller.GetModel.GenerateCube();
+        controller.GetModel.UpdateMesh();
     }
 
-    void ClearAllPoints()
+    IEnumerator SwitchState()
     {
-        controller.ModelProperty.vertices.Clear();
+        yield return new WaitForSeconds(0.1f);
+        state = DrawState.DrawBase;
     }
 }

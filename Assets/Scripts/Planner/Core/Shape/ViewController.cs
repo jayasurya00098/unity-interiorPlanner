@@ -4,9 +4,9 @@ using UnityEngine;
 public class ViewController : MonoBehaviour
 {
     private Model model;
-    public Model ModelProperty { get { return model; } }
+    public Model GetModel { get { return model; } }
 
-    void Start()
+    void Awake()
     {
         model = GetComponent<Model>();
         model.mesh = GetComponent<MeshFilter>().mesh;
