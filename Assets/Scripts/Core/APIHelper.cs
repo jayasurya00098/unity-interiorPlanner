@@ -13,9 +13,6 @@ public class APIHelper : MonoBehaviour
     public string KEY = "3bc1af367fd64d59a215f12ed68b0d5a";
     public string ID = "63f8b28b1d8b0e03e8142d13";
 
-    [SerializeField]
-    private Room room;
-
     private void Start()
     {
         Instance = this;
@@ -39,8 +36,8 @@ public class APIHelper : MonoBehaviour
         {
             case UnityWebRequest.Result.Success:
                 string response = request.downloadHandler.text;
-                room = JsonUtility.FromJson<Room>(response);
-                Debug.Log(response);
+                ViewerController.Instance.room = JsonUtility.FromJson<Room>(response);
+                ViewerController.Instance.DrawRoom();
                 break;
             case UnityWebRequest.Result.ConnectionError:
                 Debug.Log(request.error);
