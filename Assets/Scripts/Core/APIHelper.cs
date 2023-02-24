@@ -21,16 +21,16 @@ public class APIHelper : MonoBehaviour
         Instance = this;
     }
 
-    public void GetData(string id)
+    public void GetData()
     {
-        StartCoroutine(GetRequest(id));
+        StartCoroutine(GetRequest());
     }
 
-    IEnumerator GetRequest(string id)
+    IEnumerator GetRequest()
     {
         loadingScreen.SetActive(true);
 
-        string url = BASE_URL + KEY + "/data/" + id;
+        string url = BASE_URL + KEY + "/data/" + ID;
         using UnityWebRequest request = UnityWebRequest.Get(url);
 
         yield return request.SendWebRequest();
@@ -65,7 +65,7 @@ public class APIHelper : MonoBehaviour
     {
         loadingScreen.SetActive(true);
 
-        string url = BASE_URL + KEY + "/data/" + id;
+        string url = BASE_URL + KEY + "/data/" + ID;
         byte[] bodyData = Encoding.UTF8.GetBytes(json);
 
         using UnityWebRequest request = UnityWebRequest.Put(url, bodyData);
