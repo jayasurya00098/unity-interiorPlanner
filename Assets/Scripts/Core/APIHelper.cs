@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -7,34 +8,87 @@ public class APIHelper : MonoBehaviour
 {
     public static APIHelper Instance = null;
     public GameObject loadingScreen;
-    public string URL = "https://crudcrud.com/api/4cd75df6ba2e45bbb729ee2ad587e8ab/data";
+
+    public string BASE_URL = "https://crudcrud.com/api/";
+    public string KEY = "3bc1af367fd64d59a215f12ed68b0d5a";
+    public string ID = "63f8b28b1d8b0e03e8142d13";
+
+    [SerializeField]
+    private Room room;
 
     private void Start()
     {
         Instance = this;
     }
 
-    public void GetData()
+    public void GetData(string id)
     {
-        StartCoroutine(GetRequest());
+        StartCoroutine(GetRequest(id));
     }
 
-    IEnumerator GetRequest()
+    IEnumerator GetRequest(string id)
     {
         loadingScreen.SetActive(true);
 
-        using (UnityWebRequest www = UnityWebRequest.Get(URL))
-        {
-            yield return www.SendWebRequest();
+        string url = BASE_URL + KEY + "/data/" + id;
+        using UnityWebRequest request = UnityWebRequest.Get(url);
 
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                Debug.Log(www.downloadHandler.text);
-            }
+        yield return request.SendWebRequest();
+
+        switch (request.result)
+        {
+            case UnityWebRequest.Result.Success:
+                string response = request.downloadHandler.text;
+                room = JsonUtility.FromJson<Room>(response);
+                Debug.Log(response);
+                break;
+            case UnityWebRequest.Result.ConnectionError:
+                Debug.Log(request.error);
+                break;
+            case UnityWebRequest.Result.InProgress:
+                Debug.Log("Posting Data...");
+                break;
+            case UnityWebRequest.Result.ProtocolError:
+                Debug.Log(request.error);
+                break;
+        }
+
+        loadingScreen.SetActive(false);
+    }
+
+    public void PutData(string json)
+    {
+        StartCoroutine(PutRequest(json));
+    }
+
+    IEnumerator PutRequest(string json)
+    {
+        loadingScreen.SetActive(true);
+
+        string url = BASE_URL + KEY + "/data/" + id;
+        byte[] bodyData = Encoding.UTF8.GetBytes(json);
+
+        using UnityWebRequest request = UnityWebRequest.Put(url, bodyData);
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyData);
+
+        yield return request.SendWebRequest();
+
+        switch (request.result)
+        {
+            case UnityWebRequest.Result.Success:
+                string response = request.downloadHandler.text;
+                Debug.Log("Put Successful.");
+                break;
+            case UnityWebRequest.Result.ConnectionError:
+                Debug.Log(request.error);
+                break;
+            case UnityWebRequest.Result.InProgress:
+                Debug.Log("Putting Data...");
+                break;
+            case UnityWebRequest.Result.ProtocolError:
+                Debug.Log(request.error);
+                break;
         }
 
         loadingScreen.SetActive(false);
@@ -49,18 +103,31 @@ public class APIHelper : MonoBehaviour
     {
         loadingScreen.SetActive(true);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(URL, json, "application/json"))
-        {
-            yield return www.SendWebRequest();
+        string url = BASE_URL + KEY + "/data";
+        using UnityWebRequest request = UnityWebRequest.Post(url, json, "application/json");
+        request.SetRequestHeader("Content-Type", "application/json");
 
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else if(www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Form upload complete! " + www.downloadHandler.text);
-            }
+        byte[] rawData = Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = (UploadHandler) new UploadHandlerRaw(rawData);
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+
+        yield return request.SendWebRequest();
+
+        switch (request.result)
+        {
+            case UnityWebRequest.Result.Success:
+                string response = request.downloadHandler.text;
+                Debug.Log(response);
+                break;
+            case UnityWebRequest.Result.ConnectionError:
+                Debug.Log(request.error); 
+                break;
+            case UnityWebRequest.Result.InProgress:
+                Debug.Log("Posting Data...");
+                break;
+            case UnityWebRequest.Result.ProtocolError: 
+                Debug.Log(request.error);
+                break;
         }
 
         loadingScreen.SetActive(false);

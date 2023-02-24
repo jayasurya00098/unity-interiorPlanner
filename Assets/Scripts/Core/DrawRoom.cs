@@ -191,6 +191,11 @@ public class DrawRoom : MonoBehaviour
             controller.GetModel.invert = true;
             Debug.Log(controller.GetModel.invert);
         }
+        else
+        {
+            controller.GetModel.invert = false;
+            Debug.Log(controller.GetModel.invert);
+        }
 
         //base 
         Vector3 p1 = new Vector3(pos1.x, 0.01f, pos1.z);

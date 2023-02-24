@@ -107,7 +107,7 @@ public class PlannerController : MonoBehaviour
     public void SaveData()
     {
         string json = JsonUtility.ToJson(room);
-        APIHelper.Instance.PostData(json);
+        APIHelper.Instance.PutData(json);
         Debug.Log(json);
     }
 

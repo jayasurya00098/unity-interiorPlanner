@@ -2,6 +2,12 @@ using System;
 using System.Collections.Generic;
 
 [Serializable]
+public class Rooms
+{
+    List<Room> rooms = new List<Room>();
+}
+
+[Serializable]
 public class Room
 {
     public string name;
